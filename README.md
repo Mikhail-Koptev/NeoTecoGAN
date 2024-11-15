@@ -9,7 +9,7 @@
 I tested only inference mode of this program, so I didn't test a training TecoGAN model process!
 If anything doesn't work, you should create an issue on this GitHub page.
 
-**Note**
+**Note** 
 You should use ```pip install -r requirements2.txt```, if you want to install newer version of libraries
 
 ### Additional Generated Outputs
