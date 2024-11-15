@@ -1,16 +1,16 @@
-# TecoGAN
-This repository contains source code and materials for the TecoGAN project, i.e. code for a TEmporally COherent GAN for video super-resolution.
-_Authors: Mengyu Chu, You Xie, Laura Leal-Taixe, Nils Thuerey. Technical University of Munich._
+# NeoTecoGAN**
 
-This repository so far contains the code for the TecoGAN _inference_ and _training_, and downloading the training data.
-Pre-trained models are also available below, you can find links for downloading and instructions below.
-This work was published in the ACM Transactions on Graphics as "Learning Temporal Coherence via Self-Supervision for GAN-based Video Generation (TecoGAN)", https://doi.org/10.1145/3386569.3392457. The video and pre-print can be found here:
+[Open in Colab](https://colab.research.google.com/drive/1zCuOXyxO6MDZfQ074nDmnIJTItcb_AJA)
 
-Video: <https://www.youtube.com/watch?v=pZXFXtfd-Ak>
-Preprint: <https://arxiv.org/pdf/1811.09393.pdf>
-Supplemental results: <https://ge.in.tum.de/wp-content/uploads/2020/05/ClickMe.html>
+**Comment from me**
+>This is a fork of a neural web named **TecoGAN**. This fork was made because the original program cannot run with newer versions of Python libraries.
 
-![TecoGAN teaser image](resources/teaser.jpg)
+**WARNING!**
+I tested only inference mode of this program, so I didn't test a training TecoGAN model process!
+If anything doesn't work, you should create an issue on this GitHub page.
+
+**Note**
+You should use ```pip install -r requirements2.txt```, if you want to install newer version of libraries
 
 ### Additional Generated Outputs
 
@@ -100,19 +100,4 @@ python3 runGan.py 4
 
 # View log via tensorboard
 tensorboard --logdir='ex_TecoGANmm-dd-hh/log' --port=8008
-
 ```
-
-### Tensorboard GIF Summary Example
-<img src="resources/gif_summary_example.gif" alt="gif_summary_example" width="600" hspace="150"/><br>
-
-### Acknowledgements
-This work was funded by the ERC Starting Grant realFlow (ERC StG-2015-637014).  
-Part of the code is based on LPIPS[1], Photo-Realistic SISR[2] and gif_summary[3].
-
-### Reference
-[1] [The Unreasonable Effectiveness of Deep Features as a Perceptual Metric (LPIPS)](https://github.com/richzhang/PerceptualSimilarity)  
-[2] [Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network](https://github.com/brade31919/SRGAN-tensorflow.git)  
-[3] [gif_summary](https://colab.research.google.com/drive/1vgD2HML7Cea_z5c3kPBcsHUIxaEVDiIc)
-
-TUM I15 <https://ge.in.tum.de/> , TUM <https://www.tum.de/>
