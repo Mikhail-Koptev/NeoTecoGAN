@@ -16,7 +16,7 @@ import random as rn
 os.environ['PYTHONHASHSEED'] = '0'
 np.random.seed(42)
 rn.seed(12345)
-tf.set_random_seed(1234)
+tf.compat.v1.set_random_seed(1234)
 
 import tensorflow.contrib.slim as slim
 import sys, shutil, subprocess
@@ -110,7 +110,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]=FLAGS.cudaID
 my_seed = FLAGS.rand_seed
 rn.seed(my_seed)
 np.random.seed(my_seed)
-tf.set_random_seed(my_seed)
+tf.compat.v1.set_random_seed(my_seed)
 
 # Check the output_dir is given
 if FLAGS.output_dir is None:
