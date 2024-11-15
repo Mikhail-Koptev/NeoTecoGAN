@@ -11,6 +11,7 @@ runcase == ...  coming... data preparation and so on...
 import os, subprocess, sys, datetime, signal, shutil
 
 runcase = int(sys.argv[1])
+videodir = sys.argv[2]
 print ("Testing test case %d" % runcase)
 
 def preexec(): # Don't forward signals.
@@ -67,7 +68,7 @@ if( runcase == 0 ): # download inference data, trained models
 elif( runcase == 1 ): # inference a trained model
     
     dirstr = './results/' # the place to save the results
-    testpre = ['calendar'] # the test cases
+    testpre = [videodir] # the test cases
 
     if (not os.path.exists(dirstr)): os.mkdir(dirstr)
     
