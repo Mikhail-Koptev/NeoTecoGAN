@@ -18,7 +18,7 @@ np.random.seed(42)
 rn.seed(12345)
 tf.compat.v1.set_random_seed(1234)
 
-import tensorflow.contrib.slim as slim
+import tf_slim as slim
 import sys, shutil, subprocess
 
 from lib.ops import *
@@ -27,7 +27,9 @@ from lib.frvsr import generator_F, fnet
 from lib.Teco import FRVSR, TecoGAN
 
 
-Flags = tf.app.flags
+tf.compat.v1.disable_eager_execution()
+
+Flags = tf.compat.v1.app.flags
 
 Flags.DEFINE_integer('rand_seed', 1 , 'random seed' )
 
@@ -135,7 +137,7 @@ class Logger(object):
         
 sys.stdout = Logger()
 
-def printVariable(scope, key = tf.GraphKeys.MODEL_VARIABLES):
+def printVariable(scope, key = tf.compat.v1.GraphKeys.MODEL_VARIABLES):
     print("Scope %s:" % scope)
     variables_names = [ [v.name, v.get_shape().as_list()] for v in tf.get_collection(key, scope=scope)]
     total_sz = 0
@@ -192,22 +194,22 @@ if FLAGS.mode == 'inference':
     print("output shape:", output_shape)
     
     # build the graph
-    inputs_raw = tf.placeholder(tf.float32, shape=input_shape, name='inputs_raw')
+    inputs_raw = tf.compat.v1.placeholder(tf.float32, shape=input_shape, name='inputs_raw')
     
     pre_inputs = tf.Variable(tf.zeros(input_shape), trainable=False, name='pre_inputs')
     pre_gen = tf.Variable(tf.zeros(output_shape), trainable=False, name='pre_gen')
     pre_warp = tf.Variable(tf.zeros(output_shape), trainable=False, name='pre_warp')
     
-    transpose_pre = tf.space_to_depth(pre_warp, 4)
+    transpose_pre = tf.nn.space_to_depth(pre_warp, 4)
     inputs_all = tf.concat( (inputs_raw, transpose_pre), axis = -1)
-    with tf.variable_scope('generator'):
+    with tf.compat.v1.variable_scope('generator'):
         gen_output = generator_F(inputs_all, 3, reuse=False, FLAGS=FLAGS)
         # Deprocess the images outputed from the model, and assign things for next frame
         with tf.control_dependencies([ tf.assign(pre_inputs, inputs_raw)]):
             outputs = tf.assign(pre_gen, deprocess(gen_output))
     
     inputs_frames = tf.concat( (pre_inputs, inputs_raw), axis = -1)
-    with tf.variable_scope('fnet'):
+    with tf.compat.v1.variable_scope('fnet'):
         gen_flow_lr = fnet( inputs_frames, reuse=False)
         gen_flow_lr = tf.pad(gen_flow_lr, paddings, "SYMMETRIC") 
         gen_flow = upscale_four(gen_flow_lr*4.0)
