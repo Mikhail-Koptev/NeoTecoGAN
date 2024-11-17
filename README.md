@@ -10,7 +10,8 @@ I tested only inference mode of this program, so I didn't test a training TecoGA
 If anything doesn't work, you should create an issue on this GitHub page.
 
 **Note**  
-You should use ```pip install -r requirements2.txt```, if you want to install newer version of libraries
+Use ```pip install -r requirements.txt``` to install stable (tested) versions of libraries  
+If you want to install newer version of libraries, you should use ```pip install -r requirements2.txt```, 
 
 ### Additional Generated Outputs
 
