@@ -3,7 +3,7 @@
 [![Open in Colab](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/drive/1zCuOXyxO6MDZfQ074nDmnIJTItcb_AJA)
 
 **Comment from me**
->This is a fork of a neural web named **TecoGAN**. This fork was made because the original program cannot run with newer versions of Python libraries.
+>This is a fork of a neural network named **TecoGAN**. This fork was made because the original program cannot run with newer versions of Python libraries.
 
 **WARNING!**
 I tested only inference mode of this program, so I didn't test a training TecoGAN model process!
