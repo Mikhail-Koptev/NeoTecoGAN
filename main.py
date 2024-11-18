@@ -139,7 +139,7 @@ sys.stdout = Logger()
 
 def printVariable(scope, key = tf.compat.v1.GraphKeys.MODEL_VARIABLES):
     print("Scope %s:" % scope)
-    variables_names = [ [v.name, v.get_shape().as_list()] for v in tf.get_collection(key, scope=scope)]
+    variables_names = [ [v.name, v.get_shape().as_list()] for v in tf.compat.v1.get_collection(key, scope=scope)]
     total_sz = 0
     for k in variables_names:
         print ("Variable: " + k[0])
@@ -205,8 +205,8 @@ if FLAGS.mode == 'inference':
     with tf.compat.v1.variable_scope('generator'):
         gen_output = generator_F(inputs_all, 3, reuse=False, FLAGS=FLAGS)
         # Deprocess the images outputed from the model, and assign things for next frame
-        with tf.control_dependencies([ tf.assign(pre_inputs, inputs_raw)]):
-            outputs = tf.assign(pre_gen, deprocess(gen_output))
+        with tf.control_dependencies([ tf.compat.v1.assign(pre_inputs, inputs_raw)]):
+            outputs = tf.compat.v1.assign(pre_gen, deprocess(gen_output))
     
     inputs_frames = tf.concat( (pre_inputs, inputs_raw), axis = -1)
     with tf.compat.v1.variable_scope('fnet'):
@@ -215,21 +215,21 @@ if FLAGS.mode == 'inference':
         gen_flow = upscale_four(gen_flow_lr*4.0)
         gen_flow.set_shape( output_shape[:-1]+[2] )
     pre_warp_hi = tf.contrib.image.dense_image_warp(pre_gen, gen_flow)
-    before_ops = tf.assign(pre_warp, pre_warp_hi)
+    before_ops = tf.compat.v1.assign(pre_warp, pre_warp_hi)
 
     print('Finish building the network')
     
     # In inference time, we only need to restore the weight of the generator
-    var_list = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='generator')
-    var_list = var_list + tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='fnet')
+    var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.MODEL_VARIABLES, scope='generator')
+    var_list = var_list + tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.MODEL_VARIABLES, scope='fnet')
     
-    weight_initiallizer = tf.train.Saver(var_list)
+    weight_initiallizer = tf.compat.v1.train.Saver(var_list)
     
     # Define the initialization operation
-    init_op = tf.global_variables_initializer()
-    local_init_op = tf.local_variables_initializer()
+    init_op = tf.compat.v1.global_variables_initializer()
+    local_init_op = tf.compat.v1.local_variables_initializer()
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
     if (FLAGS.output_pre == ""):
         image_dir = FLAGS.output_dir
@@ -238,7 +238,7 @@ if FLAGS.mode == 'inference':
     if not os.path.exists(image_dir):
         os.makedirs(image_dir)
         
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         # Load the pretrained model
         sess.run(init_op)
         sess.run(local_init_op)
@@ -278,7 +278,7 @@ elif FLAGS.mode == 'train':
     for filename in filelist:
         shutil.copyfile('./' + filename, FLAGS.summary_dir + filename.replace("/","_"))
         
-    useValidat = tf.placeholder_with_default( tf.constant(False, dtype=tf.bool), shape=() )
+    useValidat = tf.compat.v1.placeholder_with_default( tf.constant(False, dtype=tf.bool), shape=() )
     rdata = frvsr_gpu_data_loader(FLAGS, useValidat)
     # Data = collections.namedtuple('Data', 'paths_HR, s_inputs, s_targets, image_count, steps_per_epoch')
     print('tData count = %d, steps per epoch %d' % (rdata.image_count, rdata.steps_per_epoch))
@@ -296,43 +296,43 @@ elif FLAGS.mode == 'train':
         # 'map_loss, scale_loss, FrameA_loss, FrameA_loss,...'
         train_summary += [tf.summary.scalar(key, value)]
     train_summary += Net.image_summary
-    merged = tf.summary.merge(train_summary)
+    merged = tf.compat.v1.summary.merge(train_summary)
     
     validat_summary = [] # val data statistics is not added to average
     uplen = len(Net.update_list)
     for key, value in zip(Net.update_list_name[:uplen], Net.update_list):
         # 'map_loss, scale_loss, FrameA_loss, FrameA_loss,...'
         validat_summary += [tf.summary.scalar("val_" + key, value)]
-    val_merged = tf.summary.merge(validat_summary)
+    val_merged = tf.compat.v1.summary.merge(validat_summary)
 
     # Define the saver and weight initiallizer
-    saver = tf.train.Saver(max_to_keep=50)
+    saver = tf.compat.v1.train.Saver(max_to_keep=50)
     # variable lists
-    all_var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-    tfflag = tf.GraphKeys.MODEL_VARIABLES #tf.GraphKeys.TRAINABLE_VARIABLES
+    all_var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES)
+    tfflag = tf.compat.v1.GraphKeys.MODEL_VARIABLES #tf.GraphKeys.TRAINABLE_VARIABLES
     
     if (FLAGS.checkpoint is not None) and (FLAGS.pre_trained_model is True):
-        model_var_list = tf.get_collection(tfflag, scope='generator') + tf.get_collection(tfflag, scope='fnet')
+        model_var_list = tf.compat.v1.get_collection(tfflag, scope='generator') + tf.compat.v1.get_collection(tfflag, scope='fnet')
         assign_ops = get_existing_from_ckpt(FLAGS.checkpoint, model_var_list, rest_zero=True, print_level=1)
         print('Prepare to load %d weights from the pre-trained model for generator and fnet'%len(assign_ops))
         if FLAGS.ratio>0:
-            model_var_list = tf.get_collection(tfflag, scope='tdiscriminator')
+            model_var_list = tf.compat.v1.get_collection(tfflag, scope='tdiscriminator')
             dis_list = get_existing_from_ckpt(FLAGS.checkpoint, model_var_list, print_level=0)
             print('Prepare to load %d weights from the pre-trained model for discriminator'%len(dis_list))
             assign_ops += dis_list
         
     if FLAGS.vgg_scaling > 0.0: # VGG weights are not trainable
-        vgg_var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='vgg_19')
-        vgg_restore = tf.train.Saver(vgg_var_list)
+        vgg_var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, scope='vgg_19')
+        vgg_restore = tf.compat.v1.train.Saver(vgg_var_list)
     
     print('Finish building the network.')
     
     # Start the session
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
     # init_op = tf.initialize_all_variables() # MonitoredTrainingSession will initialize automatically
-    with tf.train.MonitoredTrainingSession(config=config, save_summaries_secs=None, save_checkpoint_secs=None) as sess:
-        train_writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)
+    with tf.compat.v1.train.MonitoredTrainingSession(config=config, save_summaries_secs=None, save_checkpoint_secs=None) as sess:
+        train_writer = tf.compat.v1.summary.FileWriter(FLAGS.summary_dir, sess.graph)
         
         printVariable('generator')
         printVariable('fnet')
@@ -340,7 +340,7 @@ elif FLAGS.mode == 'train':
             printVariable('tdiscriminator')
                 
         if FLAGS.vgg_scaling > 0.0:
-            printVariable('vgg_19', tf.GraphKeys.GLOBAL_VARIABLES)
+            printVariable('vgg_19', tf.compat.v1.GraphKeys.GLOBAL_VARIABLES)
             vgg_restore.restore(sess, FLAGS.vgg_ckpt)
             print('VGG19 restored successfully!!')
                 

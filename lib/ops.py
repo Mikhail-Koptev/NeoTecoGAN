@@ -11,69 +11,69 @@ from tensorflow.python.ops import summary_op_util
 ### tensorflow functions ######################################################
 
 def preprocess(image):
-    with tf.name_scope("preprocess"):
+    with tf.compat.v1.name_scope("preprocess"):
         # [0, 1] => [-1, 1]
         return image * 2 - 1
 
 
 def deprocess(image):
-    with tf.name_scope("deprocess"):
+    with tf.compat.v1.name_scope("deprocess"):
         # [-1, 1] => [0, 1]
         return (image + 1) / 2
 
 
 def preprocessLR(image):
-    with tf.name_scope("preprocessLR"):
+    with tf.compat.v1.name_scope("preprocessLR"):
         return tf.identity(image)
 
 
 def deprocessLR(image):
-    with tf.name_scope("deprocessLR"):
+    with tf.compat.v1.name_scope("deprocessLR"):
         return tf.identity(image)
 
 # Define the convolution transpose building block
 def conv2_tran(batch_input, kernel=3, output_channel=64, stride=1, use_bias=True, scope='conv'):
     # kernel: An integer specifying the width and height of the 2D convolution window
-    with tf.variable_scope(scope):
+    with tf.compat.v1.variable_scope(scope):
         if use_bias:
             return slim.conv2d_transpose(batch_input, output_channel, [kernel, kernel], stride, 'SAME', data_format='NHWC',
-                            activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer())
+                            activation_fn=None, weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"))
         else:
             return slim.conv2d_transpose(batch_input, output_channel, [kernel, kernel], stride, 'SAME', data_format='NHWC',
-                            activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(),
+                            activation_fn=None, weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"),
                             biases_initializer=None)
 
 # Define the convolution building block
 def conv2(batch_input, kernel=3, output_channel=64, stride=1, use_bias=True, scope='conv'):
     # kernel: An integer specifying the width and height of the 2D convolution window
-    with tf.variable_scope(scope):
+    with tf.compat.v1.variable_scope(scope):
         if use_bias:
             return slim.conv2d(batch_input, output_channel, [kernel, kernel], stride, 'SAME', data_format='NHWC',
-                            activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer())
+                            activation_fn=None, weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"))
         else:
             return slim.conv2d(batch_input, output_channel, [kernel, kernel], stride, 'SAME', data_format='NHWC',
-                            activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(),
+                            activation_fn=None, weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"),
                             biases_initializer=None)
 
 
 def conv2_NCHW(batch_input, kernel=3, output_channel=64, stride=1, use_bias=True, scope='conv_NCHW'):
     # Use NCWH to speed up the inference
     # kernel: list of 2 integer specifying the width and height of the 2D convolution window
-    with tf.variable_scope(scope):
+    with tf.compat.v1.variable_scope(scope):
         if use_bias:
             return slim.conv2d(batch_input, output_channel, [kernel, kernel], stride, 'SAME', data_format='NCWH',
-                               activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer())
+                               activation_fn=None, weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"))
         else:
             return slim.conv2d(batch_input, output_channel, [kernel, kernel], stride, 'SAME', data_format='NCWH',
-                               activation_fn=None, weights_initializer=tf.contrib.layers.xavier_initializer(),
+                               activation_fn=None, weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"),
                                biases_initializer=None)
 
 
 # Define our tensorflow version PRelu
 def prelu_tf(inputs, name='Prelu'):
-    with tf.variable_scope(name):
-        alphas = tf.get_variable('alpha', inputs.get_shape()[-1], initializer=tf.zeros_initializer(), \
-            collections=[tf.GraphKeys.GLOBAL_VARIABLES, tf.GraphKeys.TRAINABLE_VARIABLES, tf.GraphKeys.MODEL_VARIABLES ],dtype=tf.float32)
+    with tf.compat.v1.variable_scope(name):
+        alphas = tf.compat.v1.get_variable('alpha', inputs.get_shape()[-1], initializer=tf.compat.v1.zeros_initializer(), \
+            collections=[tf.compat.v1.GraphKeys.GLOBAL_VARIABLES, tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, tf.compat.v1.GraphKeys.MODEL_VARIABLES ],dtype=tf.float32)
     pos = tf.nn.relu(inputs)
     neg = alphas * (inputs - abs(inputs)) * 0.5
 
@@ -86,7 +86,7 @@ def lrelu(inputs, alpha):
 
 
 def batchnorm(inputs, is_training):
-    return slim.batch_norm(inputs, decay=0.9, epsilon=0.001, updates_collections=tf.GraphKeys.UPDATE_OPS,
+    return slim.batch_norm(inputs, decay=0.9, epsilon=0.001, updates_collections=tf.compat.v1.GraphKeys.UPDATE_OPS,
                         scale=False, fused=True, is_training=is_training)
 
 def maxpool(inputs, scope='maxpool'):
@@ -95,9 +95,9 @@ def maxpool(inputs, scope='maxpool'):
 # Our dense layer
 def denselayer(inputs, output_size):
     # Rachel todo, put it to Model variable_scope
-    denseLayer = tf.layers.Dense(output_size, activation=None, kernel_initializer=tf.contrib.layers.xavier_initializer())
+    denseLayer = tf.layers.Dense(output_size, activation=None, kernel_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="uniform"))
     output = denseLayer.apply(inputs)
-    tf.add_to_collection( name=tf.GraphKeys.MODEL_VARIABLES, value=denseLayer.kernel )
+    tf.compat.v1.add_to_collection( name=tf.compat.v1.GraphKeys.MODEL_VARIABLES, value=denseLayer.kernel )
     #output = tf.layers.dense(inputs, output_size, activation=None, kernel_initializer=tf.contrib.layers.xavier_initializer())
     
     return output
@@ -124,7 +124,7 @@ def pixelShuffler(inputs, scale=2):
     return output
     
 def upscale_four(inputs, scope='upscale_four'): # mimic the tensorflow bilinear-upscaling for a fix ratio of 4
-    with tf.variable_scope(scope):
+    with tf.compat.v1.variable_scope(scope):
         size = tf.shape(inputs)
         b = size[0]
         h = size[1]
@@ -170,7 +170,7 @@ def bicubic_four(inputs, scope='bicubic_four'):
         **Parallel Catmull-Rom Spline Interpolation Algorithm for Image Zooming Based on CUDA*[Wu et. al.]**
     '''
     
-    with tf.variable_scope(scope):
+    with tf.compat.v1.variable_scope(scope):
         size = tf.shape(inputs)
         b = size[0]
         h = size[1]
@@ -222,7 +222,7 @@ def phaseShift(inputs, scale, shape_1, shape_2):
 def random_flip_batch(input, decision):
     f1 = tf.identity(input)
     f2 = tf.image.flip_left_right(input)
-    output = tf.where(tf.less(decision, 0.5), f2, f1)
+    output = tf.compat.v1.where(tf.less(decision, 0.5), f2, f1)
 
     return output
 
@@ -264,7 +264,7 @@ def compute_psnr(ref, target):
     err = tf.reduce_sum(sqr)
     v = tf.shape(diff)[0] * tf.shape(diff)[1] * tf.shape(diff)[2] * tf.shape(diff)[3]
     mse = err / tf.cast(v, tf.float32)
-    psnr = 10. * (tf.log(255. * 255. / mse) / tf.log(10.))
+    psnr = 10. * (tf.math.log(255. * 255. / mse) / tf.math.log(10.))
 
     return psnr
 
@@ -278,8 +278,8 @@ def vgg_arg_scope(weight_decay=0.0005):
   """
   with slim.arg_scope([slim.conv2d, slim.fully_connected],
                       activation_fn=tf.nn.relu,
-                      weights_regularizer=slim.l2_regularizer(weight_decay),
-                      biases_initializer=tf.zeros_initializer()):
+                      weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay)),
+                      biases_initializer=tf.compat.v1.zeros_initializer()):
     with slim.arg_scope([slim.conv2d], padding='SAME') as arg_sc:
         return arg_sc
 
@@ -311,7 +311,7 @@ def vgg_19(inputs,
   Returns:
     the last op containing the log predictions and end_points dict.
   """
-  with tf.variable_scope(scope, 'vgg_19', [inputs], reuse=reuse) as sc:
+  with tf.compat.v1.variable_scope(scope, 'vgg_19', [inputs], reuse=reuse) as sc:
     end_points_collection = sc.name + '_end_points'
     # Collect outputs for conv2d, fully_connected and max_pool2d.
     with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.max_pool2d],
@@ -362,7 +362,7 @@ def tf_data_gaussDownby4( HRdata, sigma = 1.5 ):
     with tf.device('/gpu:0'):
         fix_gkern = tf.constant( gau_wei, dtype = tf.float32, shape = [k_w, k_w, 3, 3], name='gauss_blurWeights' )
         # shape [batch_size, crop_h, crop_w, 3]
-        cur_data = tf.nn.conv2d(HRdata, fix_gkern, strides=[1,4,4,1], padding="VALID", name='gauss_downsample_4')
+        cur_data = tf.nn.conv2d(HRdata, filters=fix_gkern, strides=[1,4,4,1], padding="VALID", name='gauss_downsample_4')
     
         return cur_data
         
@@ -371,7 +371,7 @@ def get_existing_from_ckpt(ckpt, var_list=None, rest_zero=False, print_level=1):
     reader = tf.train.load_checkpoint(ckpt)
     ops = []
     if(var_list is None):
-        var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+        var_list = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.GLOBAL_VARIABLES)
     for var in var_list:
         tensor_name = var.name.split(':')[0]
         if reader.has_tensor(tensor_name):
@@ -456,17 +456,17 @@ def py_gif_summary(tag, images, max_outputs, fps):
     if channels not in (1, 3):
         raise ValueError("Tensors must have 1 or 3 channels for gif summary.")
     
-    summ = tf.Summary()
+    summ = tf.compat.v1.Summary()
     num_outputs = min(batch_size, max_outputs)
     for i in range(num_outputs):
-        image_summ = tf.Summary.Image()
+        image_summ = tf.compat.v1.Summary.Image()
         image_summ.height = height
         image_summ.width = width
         image_summ.colorspace = channels  # 1: grayscale, 3: RGB
         try:
             image_summ.encoded_image_string = encode_gif(images[i], fps)
         except (IOError, OSError) as e:
-            tf.logging.warning("Unable to encode images to a gif string because either ffmpeg is "
+            tf.compat.v1.logging.warning("Unable to encode images to a gif string because either ffmpeg is "
                 "not installed or ffmpeg returned an error: %s. Falling back to an "
                 "image summary of the first frame in the sequence.", e)
             try:
@@ -476,7 +476,7 @@ def py_gif_summary(tag, images, max_outputs, fps):
                     Image.fromarray(images[i][0]).save(output, "PNG")
                     image_summ.encoded_image_string = output.getvalue()
             except:
-                tf.logging.warning("Gif summaries requires ffmpeg or PIL to be installed: %s", e)
+                tf.compat.v1.logging.warning("Gif summaries requires ffmpeg or PIL to be installed: %s", e)
                 image_summ.encoded_image_string = "".encode('utf-8') if is_bytes else ""
         if num_outputs == 1:
             summ_tag = "{}/gif".format(tag)
@@ -507,13 +507,13 @@ def gif_summary(name, tensor, max_outputs, fps, collections=None, family=None):
     if summary_op_util.skip_summary():
         return tf.constant("")
     with summary_op_util.summary_scope(name, family, values=[tensor]) as (tag, scope):
-          val = tf.py_func(
+          val = tf.compat.v1.py_func(
               py_gif_summary,
               [tag, tensor, max_outputs, fps],
               tf.string,
               stateful=False,
               name=scope)
-          summary_op_util.collect(val, collections, [tf.GraphKeys.SUMMARIES])
+          summary_op_util.collect(val, collections, [tf.compat.v1.GraphKeys.SUMMARIES])
     return val
 
 
