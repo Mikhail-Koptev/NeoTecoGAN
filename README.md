@@ -1,6 +1,6 @@
 # NeoTecoGAN
 
-[![Open in Colab](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/drive/1zCuOXyxO6MDZfQ074nDmnIJTItcb_AJA)
+[![Open in Colab](https://img.shields.io/badge/Colab-F9AB00?style=for-the-badge&logo=googlecolab&color=525252)](https://colab.research.google.com/github/Mikhail-Koptev/NeoTecoGAN/blob/master/NeoTecoGAN.ipynb)
 
 **Comment from me**
 >This is a fork of a neural network named **TecoGAN**. This fork was made because the original program cannot run with newer versions of Python libraries.
