@@ -47,13 +47,13 @@ if( runcase == 0 ): # download inference data, trained models
     subprocess.call(cmd1, shell=True)
     
     # download some test data
-    cmd2 = "wget https://ge.in.tum.de/download/data/TecoGAN/vid3_LR.zip -O LR/vid3.zip;"
-    cmd2 += "unzip LR/vid3.zip -d LR; rm LR/vid3.zip"
-    subprocess.call(cmd2, shell=True)
+    # cmd2 = "wget https://ge.in.tum.de/download/data/TecoGAN/vid3_LR.zip -O LR/vid3.zip;"
+    # cmd2 += "unzip LR/vid3.zip -d LR; rm LR/vid3.zip"
+    # subprocess.call(cmd2, shell=True)
     
-    cmd2 = "wget https://ge.in.tum.de/download/data/TecoGAN/tos_LR.zip -O LR/tos.zip;"
-    cmd2 += "unzip LR/tos.zip -d LR; rm LR/tos.zip"
-    subprocess.call(cmd2, shell=True)
+    # cmd2 = "wget https://ge.in.tum.de/download/data/TecoGAN/tos_LR.zip -O LR/tos.zip;"
+    # cmd2 += "unzip LR/tos.zip -d LR; rm LR/tos.zip"
+    # subprocess.call(cmd2, shell=True)
     
     # download the ground-truth data
     # if(not os.path.exists("./HR/")): os.mkdir("./HR/")
