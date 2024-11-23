@@ -60,7 +60,7 @@ def loadHR_batch(FLAGS, tar_size):
             raise ValueError('Video input directory not found')
             
         image_set_lists = []
-        with tf.variable_scope('load_frame'):
+        with tf.compat.v1.variable_scope('load_frame'):
             for dir_i in range(FLAGS.str_dir, FLAGS.end_dir+1):
                 inputDir = os.path.join( FLAGS.input_video_dir, '%s_%04d' %(FLAGS.input_video_pre, dir_i) )
                 if (os.path.exists(inputDir)): # the following names are hard coded: col_high_
@@ -72,7 +72,7 @@ def loadHR_batch(FLAGS, tar_size):
                                     for frame_i in range(FLAGS.max_frm + 1 )]
                     image_set_lists.append(image_list) 
             tensor_set_lists = tf.convert_to_tensor(image_set_lists, dtype=tf.string)
-            input_slices = tf.train.slice_input_producer([tensor_set_lists], shuffle=False,
+            input_slices = tf.compat.v1.train.slice_input_producer([tensor_set_lists], shuffle=False,
                                             capacity=int(FLAGS.name_video_queue_capacity) )
             
             input_slices = input_slices[0] # one slice contains pathes for (FLAGS.max_frm frames + 1) frames
@@ -80,7 +80,7 @@ def loadHR_batch(FLAGS, tar_size):
             HR_data = []
             for frame_i in range(FLAGS.max_frm + 1 ):
                 HR_data_i =  tf.image.convert_image_dtype( 
-                                    tf.image.decode_png(tf.read_file(input_slices[frame_i]), channels=3), 
+                                    tf.image.decode_png(tf.io.read_file(input_slices[frame_i]), channels=3), 
                                     dtype=tf.float32)
                 HR_data += [HR_data_i]
             # the reshape after loading is necessary as the unkown output shape crashes the cropping op
@@ -89,7 +89,7 @@ def loadHR_batch(FLAGS, tar_size):
             HR_data = tf.reshape(HR_data, (HR_shape[0], HR_shape[1], HR_shape[2], HR_shape[3]))
             
         # sequence preparation and data augmentation part
-        with tf.name_scope('sequence_data_preprocessing'):
+        with tf.compat.v1.name_scope('sequence_data_preprocessing'):
             sequence_length = FLAGS.max_frm - FLAGS.RNN_N + 1
             num_image_list_HR_t_cur = len(image_set_lists)*sequence_length
             HR_sequences, name_sequences = [], []
@@ -97,9 +97,9 @@ def loadHR_batch(FLAGS, tar_size):
                 print('[Config] Use random crop')
                 # a k_w_border margin is in tar_size for gaussian blur
                 # have to use the same crop because crop_to_bounding_box only accept one value
-                offset_w = tf.cast(tf.floor(tf.random_uniform([], 0, \
+                offset_w = tf.cast(tf.floor(tf.random.uniform([], 0, \
                     tf.cast(HR_shape[-2], tf.float32) - tar_size )),dtype=tf.int32)
-                offset_h = tf.cast(tf.floor(tf.random_uniform([], 0, \
+                offset_h = tf.cast(tf.floor(tf.random.uniform([], 0, \
                     tf.cast(HR_shape[-3], tf.float32) - tar_size )),dtype=tf.int32) 
             else:
                 raise Exception('Not implemented') # train_data can have different resolutions, crop is necessary    
@@ -108,21 +108,21 @@ def loadHR_batch(FLAGS, tar_size):
                 print('[Config] Move first frame')
                 # our data augmentation, moving first frame to mimic camera motion
                 # random motions, one slice use the same motion
-                offset_xy = tf.cast(tf.floor(tf.random_uniform([FLAGS.RNN_N, 2], -3.5,4.5)),dtype=tf.int32)
+                offset_xy = tf.cast(tf.floor(tf.random.uniform([FLAGS.RNN_N, 2], -3.5,4.5)),dtype=tf.int32)
                 # [FLAGS.RNN_N , 2], relative positions
                 pos_xy = tf.cumsum(offset_xy, axis=0, exclusive=True) 
                 # valid regions, lefttop_pos, target_size-range_pos
                 min_pos = tf.reduce_min( pos_xy, axis=0 )
                 range_pos = tf.reduce_max( pos_xy, axis=0 ) - min_pos # [ shrink x, shrink y ]
                 lefttop_pos = pos_xy - min_pos # crop point
-                moving_decision = tf.random_uniform([sequence_length], 0, 1, dtype=tf.float32)
+                moving_decision = tf.random.uniform([sequence_length], 0, 1, dtype=tf.float32)
                 fix_off_h = tf.clip_by_value(offset_h, 0, HR_shape[-3] - tar_size - range_pos[1])
                 fix_off_w = tf.clip_by_value(offset_w, 0, HR_shape[-2] - tar_size - range_pos[0])
             
             if FLAGS.flip and (FLAGS.mode == 'train'):
                 print('[Config] Use random flip')
                 # Produce the decision of random flip
-                flip_decision = tf.random_uniform([sequence_length], 0, 1, dtype=tf.float32)
+                flip_decision = tf.random.uniform([sequence_length], 0, 1, dtype=tf.float32)
                 
             for fi in range( FLAGS.RNN_N ):
                 HR_sequence = HR_data[ fi : fi+sequence_length ]  # sequence_length, h, w, 3
@@ -145,8 +145,8 @@ def loadHR_batch(FLAGS, tar_size):
                         HR_sequence_crop_1 = tf.image.crop_to_bounding_box(HR_data_0, 
                             fix_off_h + lefttop_pos[fi][1], fix_off_w + lefttop_pos[fi][0], tar_size, tar_size)
                             
-                        HR_sequence_crop = tf.where(moving_decision < 0.7, HR_sequence_crop, HR_sequence_crop_1)
-                        name_sequence = tf.where(moving_decision < 0.7, name_sequence, name_sequence1) 
+                        HR_sequence_crop = tf.compat.v1.where(moving_decision < 0.7, HR_sequence_crop, HR_sequence_crop_1)
+                        name_sequence = tf.compat.v1.where(moving_decision < 0.7, name_sequence, name_sequence1) 
                 
 
                 HR_sequence_crop.set_shape([sequence_length, tar_size, tar_size, 3])
@@ -160,7 +160,7 @@ def loadHR_batch(FLAGS, tar_size):
             raise ValueError('Length of target image sequence is incorrect,expected {}, got {}.'.format(FLAGS.RNN_N, len(target_images)))
         
         print('Sequenced batches: {}, sequence length: {}'.format(num_image_list_HR_t_cur, FLAGS.RNN_N))
-        batch_list = tf.train.shuffle_batch(output_names + target_images, enqueue_many=True,\
+        batch_list = tf.compat.v1.train.shuffle_batch(output_names + target_images, enqueue_many=True,\
                         batch_size=int(FLAGS.batch_size), capacity=FLAGS.video_queue_capacity+FLAGS.video_queue_batch*sequence_length,
                         min_after_dequeue=FLAGS.video_queue_capacity, num_threads=FLAGS.queue_thread, seed = FLAGS.rand_seed)
         
@@ -196,9 +196,9 @@ def loadHR(FLAGS, tar_size):
                     
         image_list_HR_r = [tf.convert_to_tensor(_ , dtype=tf.string) for _ in image_list_HR_r ]
 
-        with tf.variable_scope('load_frame'):
+        with tf.compat.v1.variable_scope('load_frame'):
             # define the image list queue
-            output = tf.train.slice_input_producer(image_list_HR_r, shuffle=False,\
+            output = tf.compat.v1.train.slice_input_producer(image_list_HR_r, shuffle=False,\
                 capacity=int(FLAGS.name_video_queue_capacity) )
             output_names = output
             
@@ -206,16 +206,16 @@ def loadHR(FLAGS, tar_size):
                 
             if FLAGS.movingFirstFrame and FLAGS.mode == 'train': # our data augmentation, moving first frame to mimic camera motion
                 print('[Config] Use random crop')
-                offset_xy = tf.cast(tf.floor(tf.random_uniform([FLAGS.RNN_N, 2], -3.5,4.5)),dtype=tf.int32)
+                offset_xy = tf.cast(tf.floor(tf.random.uniform([FLAGS.RNN_N, 2], -3.5,4.5)),dtype=tf.int32)
                 # [FLAGS.RNN_N , 2], shifts
                 pos_xy = tf.cumsum(offset_xy, axis=0, exclusive=True) # relative positions
                 min_pos = tf.reduce_min( pos_xy, axis=0 )
                 range_pos = tf.reduce_max( pos_xy, axis=0 ) - min_pos # [ shrink x, shrink y ]
                 lefttop_pos = pos_xy - min_pos # crop point
-                moving_decision = tf.random_uniform([], 0, 1, dtype=tf.float32)
+                moving_decision = tf.random.uniform([], 0, 1, dtype=tf.float32)
                 
             for fi in range( FLAGS.RNN_N ):
-                HR_data = tf.image.convert_image_dtype( tf.image.decode_png(tf.read_file(output[fi]), channels=3), dtype=tf.float32)
+                HR_data = tf.image.convert_image_dtype( tf.image.decode_png(tf.io.read_file(output[fi]), channels=3), dtype=tf.float32)
                 if(FLAGS.movingFirstFrame):
                     if(fi == 0):
                         HR_data_0 = tf.identity(HR_data)
@@ -231,17 +231,17 @@ def loadHR(FLAGS, tar_size):
             target_images = data_list_HR_r
         
         # Other data augmentation part
-        with tf.name_scope('data_preprocessing'):
+        with tf.compat.v1.name_scope('data_preprocessing'):
             
-            with tf.name_scope('random_crop'):
+            with tf.compat.v1.name_scope('random_crop'):
                 # Check whether perform crop
                 if (FLAGS.random_crop is True) and FLAGS.mode == 'train':
                     print('[Config] Use random crop')
                     target_size = tf.shape(target_images[0])
                     
-                    offset_w = tf.cast(tf.floor(tf.random_uniform([], 0, \
+                    offset_w = tf.cast(tf.floor(tf.random.uniform([], 0, \
                         tf.cast(target_size[1], tf.float32) - tar_size )),dtype=tf.int32)
-                    offset_h = tf.cast(tf.floor(tf.random_uniform([], 0, \
+                    offset_h = tf.cast(tf.floor(tf.random.uniform([], 0, \
                         tf.cast(target_size[0], tf.float32) - tar_size )),dtype=tf.int32) 
                     
                     for frame_t in range(FLAGS.RNN_N):
@@ -251,12 +251,12 @@ def loadHR(FLAGS, tar_size):
                 else:
                     raise Exception('Not implemented')
             
-            with tf.variable_scope('random_flip'):
+            with tf.compat.v1.variable_scope('random_flip'):
                 # Check for random flip:
                 if (FLAGS.flip is True) and (FLAGS.mode == 'train'):
                     print('[Config] Use random flip')
                     # Produce the decision of random flip
-                    flip_decision = tf.random_uniform([], 0, 1, dtype=tf.float32)
+                    flip_decision = tf.random.uniform([], 0, 1, dtype=tf.float32)
                     for frame_t in range(FLAGS.RNN_N):
                         target_images[frame_t] = random_flip(target_images[frame_t], flip_decision)
                     
@@ -265,7 +265,7 @@ def loadHR(FLAGS, tar_size):
                 
         if FLAGS.mode == 'train':
             print('Sequenced batches: {}, sequence length: {}'.format(num_image_list_HR_t_cur, FLAGS.RNN_N))
-            batch_list = tf.train.shuffle_batch(output_names + target_images,\
+            batch_list = tf.compat.v1.train.shuffle_batch(output_names + target_images,\
                             batch_size=int(FLAGS.batch_size), capacity=FLAGS.video_queue_capacity+FLAGS.video_queue_batch*FLAGS.max_frm,
                             min_after_dequeue=FLAGS.video_queue_capacity, num_threads=FLAGS.queue_thread, seed = FLAGS.rand_seed)
         else:
@@ -283,11 +283,11 @@ def frvsr_gpu_data_loader(FLAGS, useValData_ph): # useValData_ph, tf bool placeh
     # loadHR_batch load 120 frames at once, is faster for a single queue, and usually will be slower and slower for larger queue_thread
     # loadHR load RNN_N frames at once, is faster when queue_thread > 4, but slow for queue_thread < 4
     
-    with tf.name_scope('load_frame_cpu'):
-        with tf.name_scope('train_data'):
+    with tf.compat.v1.name_scope('load_frame_cpu'):
+        with tf.compat.v1.name_scope('train_data'):
             print("Preparing train_data")
             batch_list, num_image_list_HR_t_cur = loadHRfunc(FLAGS, tar_size)
-        with tf.name_scope('validation_data'):
+        with tf.compat.v1.name_scope('validation_data'):
             print("Preparing validation_data")
             val_capacity = 128 # TODO parameter!
             val_q_thread = 1   # TODO parameter!
@@ -303,7 +303,7 @@ def frvsr_gpu_data_loader(FLAGS, useValData_ph): # useValData_ph, tf bool placeh
     
     target_images = []
     input_images = []
-    with tf.name_scope('load_frame_gpu'):
+    with tf.compat.v1.name_scope('load_frame_gpu'):
         with tf.device('/gpu:0'):
             for frame_t in range(FLAGS.RNN_N):
                 def getTrainHR():
